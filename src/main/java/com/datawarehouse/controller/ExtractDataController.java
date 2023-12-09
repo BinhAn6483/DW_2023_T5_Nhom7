@@ -1,6 +1,6 @@
 package com.datawarehouse.controller;
 
-import com.datawarehouse.service.ExtractDataFromSource;
+import com.datawarehouse.service.ExtractDataFromSourceService;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +12,7 @@ import java.io.IOException;
 public class ExtractDataController {
 
     @Autowired
-    private ExtractDataFromSource extractDataFromSource;
+    ExtractDataFromSourceService extractDataFromSource;
 
     @GetMapping("/extract-data-from-source")
     public void ExtractData() throws IOException {

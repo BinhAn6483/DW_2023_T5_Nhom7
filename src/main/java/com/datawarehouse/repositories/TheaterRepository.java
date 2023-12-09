@@ -9,5 +9,5 @@ import java.util.List;
 public interface TheaterRepository extends JpaRepository<Theater, Integer> {
 
     @Query("SELECT t FROM Theater t")
-    public List<Theater> selectAll();
+     List<Theater> selectAll();
 }

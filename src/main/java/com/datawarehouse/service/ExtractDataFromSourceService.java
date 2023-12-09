@@ -23,15 +23,15 @@ import java.util.*;
 
 // Extract data from web -> .xlsx file
 @Service
-public class ExtractDataFromSource {
+public class ExtractDataFromSourceService {
 
     @Autowired
-    private TheaterRepository theaterRepository;
+    TheaterRepository theaterRepository;
 
     /**
      * Load data from Sources : https://www.cgv.vn/
      */
-    public void extractData() throws IOException {
+    public void extractData() throws IOException, InterruptedException {
         // Get all Theater -> URL
         List<Theater> theaterList = theaterRepository.selectAll();
 
@@ -47,7 +47,7 @@ public class ExtractDataFromSource {
         Map<String, Object[]> dataMap = new TreeMap<>();
 
         dataMap.put(String.valueOf(1), new Object[]{
-                "DateTime", "Avatar", "Name Film", "Path Film", "Theater Name"});
+                "DateTime", "Avatar", "Name Film", "Director", "Actor", "Genre", "Length", "Language", "Path Film", "Theater Name", "Description"});
 
         // Get date current -> dateTime
         LocalDate currentDate = LocalDate.now();
@@ -59,11 +59,14 @@ public class ExtractDataFromSource {
             Elements elements = doc.getElementsByClass("film-list");
 
             for (Element filmElement : elements) {
+                Thread.sleep(60000*5);
 
                 // Name film
                 Element labelElement = filmElement.getElementsByClass("film-label").get(0).getElementsByTag("a").get(0);
                 String nameFilm = labelElement.text();
                 String pathFilm = labelElement.attr("href");
+                MovieSource dataMovie = getDataMovie(pathFilm);
+
 
                 // Avatar
                 Element avatarElement = filmElement.getElementsByClass("film-poster").get(0).getElementsByTag("a").get(0);
@@ -80,7 +83,8 @@ public class ExtractDataFromSource {
                         String dateTime = date + " " + time;
                         System.out.println(dateTime);
                         dataMap.put(String.valueOf(index), new Object[]{
-                                dateTime, avatarFilm, nameFilm, pathFilm, theater.getName()});
+                                dateTime, avatarFilm, nameFilm, dataMovie.director, dataMovie.actor, dataMovie.genre,
+                                dataMovie.length, dataMovie.language, pathFilm, theater.getName(), dataMovie.desc});
                         index++;
                     }
                 }
@@ -121,29 +125,43 @@ public class ExtractDataFromSource {
         out.close();
     }
 
-    public static void main(String[] args) throws IOException {
-//        String userAgent = "Mozilla/6.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36";
-//        String url = "https://www.cgv.vn/default/cinox/site/cgv-hung-vuong-plaza";
-//        Document doc = Jsoup.connect(url).userAgent(userAgent).get();
-//
-//        Elements elements = doc.getElementsByClass("film-list");
-//        //elements.forEach(el -> System.out.println("article: " + el.child(1)));
-//        for (Element el : elements) {
-//            Element elLabel = el.getElementsByClass("film-label").get(0).getElementsByTag("a").get(0);
-//            System.out.println(elLabel.text());
-//
-//            Element elAvatar = el.getElementsByClass("film-poster").get(0).getElementsByTag("img").get(0);
-//            System.out.println(elAvatar.attr("src"));
-//
-//            Elements elTime = el.getElementsByClass("film-right");
-//            elTime.forEach(e -> {
-//                e.getElementsByTag("span").forEach(i -> System.out.println(i.text()));
-//            });
-//            System.out.println(elAvatar.attr("src"));
-//        }
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/d-HH:mm:ss");
-        LocalDateTime now = LocalDateTime.now();
-        System.out.println(dtf.format(now));
+    private MovieSource getDataMovie(String path) throws IOException {
+        MovieSource result = new MovieSource();
+        Document doc = Jsoup.connect(path).get();
+        //get director
+        Element elDirector = doc.getElementsByClass("movie-director").get(0);
+        result.director = elDirector.getElementsByClass("std").text();
 
+        // get actor
+        Element elActor = doc.getElementsByClass("movie-actress").get(0);
+        result.actor = elActor.getElementsByClass("std").text();
+
+        // desc
+        Element elDesc = doc.getElementsByClass("tab-content").get(0);
+        result.desc = elDesc.getElementsByClass("std").text();
+
+        // get genre
+        Element elGenre = doc.getElementsByClass("movie-genre").get(0);
+        result.genre = elGenre.getElementsByClass("std").text();
+
+        // get length
+        Element elLength = doc.getElementsByClass("movie-actress").get(1);
+        result.length = elLength.getElementsByClass("std").text();
+
+        // get language
+        Element elLanguage = doc.getElementsByClass("movie-language").get(0);
+        result.language = elLanguage.getElementsByClass("std").text();
+
+        return result;
     }
+
+    private static class MovieSource {
+        String desc;
+        String director;
+        String actor;
+        String genre;
+        String length;
+        String language;
+    }
+
 }
